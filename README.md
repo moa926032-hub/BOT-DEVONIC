@@ -1,7 +1,7 @@
 # 🤍 DEVONIC TEAM - WhatsApp Bot
 
 <div align="center">
-  <img src="https://ibb.co/7JJXybBT" alt="IMAGE" width="500"/>
+  <img src="https://i.postimg.cc/QtkyWmpn/Whats-App-Image-2026-08-18-at-5-22-06-PM.jpg" alt="IMAGE" width="500"/>
   
   [![GitHub](https://img.shields.io/badge/GitHub-MO-blue?style=for-the-badge&logo=github)](https://github.com/moa926032-hub)
   [![WhatsApp](https://img.shields.io/badge/WhatsApp-Owner-green?style=for-the-badge&logo=whatsapp)](https://wa.me/201515063273)
