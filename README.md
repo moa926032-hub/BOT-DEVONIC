@@ -50,7 +50,7 @@
 termux-setup-storage
 pkg update -y && pkg upgrade -y
 pkg install git nodejs -y
-git clone https://github.com/elgenral-dark/BOT-DEVONIC.git
+git clone https://github.com/moa926032-hub/BOT-DEVONIC.git
 cd BOT-DEVONIC 
 npm install
 npm start
