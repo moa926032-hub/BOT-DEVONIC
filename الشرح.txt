@@ -1,0 +1,53 @@
+# Devonic WhatsApp Bot
+
+Arabic WhatsApp group-management and media bot, maintained with backwards-compatible plugins.
+
+## Run & Operate
+
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run build` — typecheck + build all packages
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
+- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- Required env: `DATABASE_URL` — Postgres connection string
+
+## Stack
+
+- pnpm workspaces, Node.js 24, TypeScript 5.9
+- API: Express 5
+- DB: PostgreSQL + Drizzle ORM
+- Validation: Zod (`zod/v4`), `drizzle-zod`
+- API codegen: Orval (from OpenAPI spec)
+- Build: esbuild (CJS bundle)
+
+## Where things live
+
+- `bot/main.js` — WhatsApp connection lifecycle and local data persistence
+- `bot/index.js` — supervised child process and retry policy
+- `bot/handlers/` — message normalization and plugin loading
+- `bot/plugins/` — user-facing bot commands
+- `bot/data/` — bot state and the generated local database
+
+## Architecture decisions
+
+- Both legacy function-export plugins and object-style plugins are normalized by the loader to preserve existing commands.
+- Plugins are loaded once and explicitly reloaded after owner-controlled plugin file changes, rather than on every message.
+- The connection directory is passed from the supervisor to avoid accidentally creating multiple WhatsApp sessions.
+- Runtime group/user state is persisted atomically to `bot/data/database.json`.
+
+## Product
+
+The bot provides group moderation, owner controls, media downloaders, interactive menus, games, warnings, monitoring, and storage utilities.
+
+## User preferences
+
+- Preserve the intent and behavior of every existing command while improving stability.
+
+## Gotchas
+
+- Run `npm ci --legacy-peer-deps` inside `bot/` because Baileys and Sharp expose an optional peer-version constraint.
+- The bot is a standalone Node package under `bot/`; the root pnpm workspace artifacts are unrelated service scaffolding.
+
+## Pointers
+
+- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
