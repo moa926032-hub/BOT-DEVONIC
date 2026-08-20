@@ -49,12 +49,18 @@
 ```bash
 termux-setup-storage
 pkg update -y && pkg upgrade -y
-pkg install git nodejs -y
+pkg install git nodejs-lts -y
 git clone https://github.com/moa926032-hub/BOT-DEVONIC.git
 cd BOT-DEVONIC 
 npm install
 npm start
 ```
+
+> هذه النسخة لا تحتاج إلى `canvas` أو `fs-extra` أو مكتبات بناء الرسوميات، لذلك
+> لا تحتاج إلى تثبيت `python` أو `clang` أو `cairo` لتشغيل البوت.
+>
+> يتم تثبيت مكتبة أوامر YouTube وSpotify والأنمي من GitHub تلقائيًا بواسطة
+> `npm install`. لذلك يجب أن يكون Git مثبتًا في Termux، وسيتم تشغيل كل الأوامر.
 
 ---
 
