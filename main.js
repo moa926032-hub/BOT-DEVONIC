@@ -1,5 +1,6 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const fs = require('fs-extra');
+const fs = require('fs');
+const { mkdir } = require('fs/promises');
 const pino = require('pino');
 const path = require('path');
 const chalk = require('chalk');
@@ -77,7 +78,7 @@ async function startBot() {
         // configurable prevents accidental creation of a second session.
         const sessionDir = process.env.CONNECTION_FOLDER ||
             path.join(__dirname, 'ملف_الاتصال');
-        await fs.ensureDir(sessionDir);
+        await mkdir(sessionDir, { recursive: true });
 
         const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
 
