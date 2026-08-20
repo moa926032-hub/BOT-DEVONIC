@@ -1,4 +1,4 @@
-const fs = require('fs-extra');
+const fs = require('fs/promises');
 const path = require('path');
 const logger = require('../utils/console');
 const config = require('../config');
@@ -14,7 +14,7 @@ async function loadPlugins(force = false) {
     try {
         if (pluginsLoaded && !force) return loadedPlugins;
         const pluginsDir = path.join(__dirname, '../plugins');
-        await fs.ensureDir(pluginsDir);
+        await fs.mkdir(pluginsDir, { recursive: true });
         const files = await fs.readdir(pluginsDir);
         const pluginFiles = files.filter(file => file.endsWith('.js'));
         for (const file of pluginFiles) {
