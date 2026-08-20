@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const cheerio = require('cheerio');
 const axios = require('axios');
-const qs = require('qs');
 
 const ff = async (m, { text, conn }) => {
   if (!text) return m.reply("❌: حط رابط الفيديو جنب الأمر");
@@ -35,11 +34,11 @@ module.exports = ff;
 
 async function downloadTikTok(url) {
 
-  let data = qs.stringify({
+  let data = new URLSearchParams({
     'id': url,
     'locale': 'en',
     'tt': crypto.randomBytes(8).toString('hex'),
-  });
+  }).toString();
 
   let config = {
     method: 'POST',
