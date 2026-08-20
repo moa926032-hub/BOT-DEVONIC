@@ -1,6 +1,14 @@
-const { Scrapy } = require("meowsab");
+function getScrapy() {
+  try {
+    return require("meowsab").Scrapy;
+  } catch {
+    return null;
+  }
+}
 
 let handler = async (m, { conn, text, command }) => {
+  const Scrapy = getScrapy();
+  if (!Scrapy) return m.reply("❌ أوامر الأنمي غير متاحة حاليًا لتقليل مكاتب التثبيت.");
   if (!text) return m.reply("مثال: .انمي Naruto");
   
   if (command === "انمي") {
