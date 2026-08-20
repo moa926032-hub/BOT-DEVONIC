@@ -1,6 +1,14 @@
-const { Scrapy } = require("meowsab");
+function getScrapy() {
+  try {
+    return require("meowsab").Scrapy;
+  } catch {
+    return null;
+  }
+}
 
 const handler = async (m, { conn, command, text }) => {
+  const Scrapy = getScrapy();
+  if (!Scrapy) return m.reply("❌ أوامر YouTube غير متاحة حاليًا لتقليل مكاتب التثبيت.");
   if (!text) throw '*❲ ❤️ ❳ ~ حط رابط جنب الامر ~ ❲ 💙 ❳ *';
   
   if (!text.match(/youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\//)) {
