@@ -1,7 +1,7 @@
 const { loadPlugins } = require('./plugins');
 const config = require('../config');
 const logger = require('../utils/console');
-const fs = require('fs-extra');
+const fs = require('fs');
 const path = require('path');
 const { isElite } = require('../haykala/elite');
 const { getStorageStats, MAX_STORAGE_BYTES, formatBytes } = require('../utils/storage');
