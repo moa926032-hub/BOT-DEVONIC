@@ -1,6 +1,6 @@
 const { fork } = require('child_process');
 const { join } = require('path');
-const fs = require('fs-extra');
+const fs = require('fs');
 const logger = require('./utils/console');
 
 const maxRetries = 3;
