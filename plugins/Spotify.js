@@ -1,6 +1,14 @@
-const { Scrapy } = require("meowsab");
+function getScrapy() {
+  try {
+    return require("meowsab").Scrapy;
+  } catch {
+    return null;
+  }
+}
 
 let handler = async (m, { conn, text }) => {
+  const Scrapy = getScrapy();
+  if (!Scrapy) return m.reply("❌ أمر Spotify غير متاح حاليًا لتقليل مكاتب التثبيت.");
   if (!text) return m.reply("مثال: .سبوتيفاي https://open.spotify.com/track/3XiolLAtcY6wi28QyZ9vDO?si=ScKGlkeMQ0GMAkhzuggeYQ");
   m.react("⏳")
   
