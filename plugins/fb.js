@@ -1,5 +1,4 @@
 const axios = require('axios');
-const qs = require('qs');
 const cheerio = require('cheerio');
 
 const handler = async (m, { conn, text, usedPrefix, command }) => {
@@ -45,7 +44,7 @@ handler.command = ["فيس", "فيسبوك", "fb", "fbdl", "facebook"];
 module.exports = handler;
 
 async function userVerify(url) {
-  const data = qs.stringify({ url });
+  const data = new URLSearchParams({ url }).toString();
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'Accept': '*/*',
@@ -58,7 +57,7 @@ async function userVerify(url) {
 }
 
 async function ajaxSearch(query, token, exp, cftoken) {
-  const data = qs.stringify({
+  const data = new URLSearchParams({
     k_exp: exp,
     k_token: token,
     q: query,
@@ -67,7 +66,7 @@ async function ajaxSearch(query, token, exp, cftoken) {
     v: 'v2',
     w: '',
     cftoken
-  });
+  }).toString();
 
   const headers = {
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
