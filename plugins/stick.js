@@ -2,6 +2,7 @@ const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 module.exports = {
   command: 'ملصق',
@@ -30,8 +31,9 @@ module.exports = {
 
       const tempDir = path.join(__dirname, '..', 'temp');
       if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-      const inputPath = path.join(tempDir, `sticker_${Date.now()}_in.jpg`);
-      const outputPath = path.join(tempDir, `sticker_${Date.now()}_out.webp`);
+      const tempId = crypto.randomUUID();
+      const inputPath = path.join(tempDir, `sticker_${tempId}_in.jpg`);
+      const outputPath = path.join(tempDir, `sticker_${tempId}_out.webp`);
 
       fs.writeFileSync(inputPath, buffer);
 
