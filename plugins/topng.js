@@ -41,7 +41,7 @@ module.exports = {
             }
 
             // إنشاء مجلد مؤقت إن لم يكن موجودًا
-            const tempDir = '/sdcard/.bot/bot/temp';
+            const tempDir = path.join(__dirname, '..', 'temp');
             if (!fs.existsSync(tempDir)) {
                 await mkdir(tempDir, { recursive: true });
             }
