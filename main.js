@@ -25,7 +25,7 @@ function loadDatabase() {
 
 function saveDatabase() {
     try {
-        fs.ensureDirSync(path.dirname(databasePath));
+        fs.mkdirSync(path.dirname(databasePath), { recursive: true });
         const temporaryPath = `${databasePath}.tmp`;
         fs.writeFileSync(temporaryPath, JSON.stringify(global.db, null, 2));
         fs.renameSync(temporaryPath, databasePath);
