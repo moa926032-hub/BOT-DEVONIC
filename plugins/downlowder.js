@@ -1,6 +1,7 @@
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 module.exports = {
     command: 'تحميل',
@@ -29,7 +30,7 @@ module.exports = {
                 return await sock.sendMessage(chatId, { text: '❌ الرابط غير صالح.' }, { quoted: msg });
             }
 
-            const timestamp = Date.now();
+            const timestamp = crypto.randomUUID();
             const tempDir = path.join(__dirname, '..', 'temp');
             if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
