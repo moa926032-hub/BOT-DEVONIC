@@ -28,12 +28,14 @@ module.exports = {
         }, { quoted: m });
       }
 
-      const inputPath = path.join(process.cwd(), 'temp-input.jpg');
-      const outputPath = path.join(process.cwd(), 'temp-output.webp');
+      const tempDir = path.join(__dirname, '..', 'temp');
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+      const inputPath = path.join(tempDir, `sticker_${Date.now()}_in.jpg`);
+      const outputPath = path.join(tempDir, `sticker_${Date.now()}_out.webp`);
 
       fs.writeFileSync(inputPath, buffer);
 
-      exec(`ffmpeg -i ${inputPath} -vf "scale=512:512:force_original_aspect_ratio=decrease" -c:v libwebp -preset default -quality 100 -compression_level 6 -qscale 50 ${outputPath}`, async (error) => {
+      exec(`ffmpeg -y -i "${inputPath}" -vf "scale=512:512:force_original_aspect_ratio=decrease" -c:v libwebp -preset default -quality 100 -compression_level 6 -qscale 50 "${outputPath}"`, async (error) => {
         if (error) {
           console.error('FFmpeg error:', error);
           return await sock.sendMessage(m.key.remoteJid, { 
