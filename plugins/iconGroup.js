@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const crypto = require('crypto');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { isElite } = require('../haykala/elite.js');
 
@@ -38,8 +39,9 @@ module.exports = {
             const tempDir = path.join(__dirname, '..', 'temp');
             if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
-            const inputPath = path.join(tempDir, 'group_profile.webp');
-            const outputPath = path.join(tempDir, 'group_profile.jpg');
+            const tempId = crypto.randomUUID();
+            const inputPath = path.join(tempDir, `group_profile_${tempId}.webp`);
+            const outputPath = path.join(tempDir, `group_profile_${tempId}.jpg`);
             fs.writeFileSync(inputPath, buffer);
 
             exec(`ffmpeg -y -i "${inputPath}" "${outputPath}"`, async (err) => {
