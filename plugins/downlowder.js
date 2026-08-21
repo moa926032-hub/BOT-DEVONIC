@@ -30,7 +30,7 @@ module.exports = {
             }
 
             const timestamp = Date.now();
-            const tempDir = './temp';
+            const tempDir = path.join(__dirname, '..', 'temp');
             if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
             const videoPath = path.join(tempDir, `${timestamp}.mp4`);
