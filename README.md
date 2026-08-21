@@ -50,11 +50,24 @@
 termux-setup-storage
 pkg update -y && pkg upgrade -y
 pkg install git nodejs-lts -y
+
+# أدوات اختيارية تحتاجها بعض الأوامر فقط
+pkg install ffmpeg -y            # أوامر الملصقات وصورة المجموعة
+pkg install python -y && pip install -U yt-dlp   # أمر .تحميل
+pkg install ffmpeg -y            # مطلوب أيضًا لتحويل .تحميل صوت
+pkg install mpv -y               # أصوات الكونسول (اختياري تمامًا)
+
 git clone https://github.com/moa926032-hub/BOT-DEVONIC.git
 cd BOT-DEVONIC 
 npm install
 npm start
 ```
+
+> **متطلبات أساسية:** Node.js 20 أو أحدث (`nodejs-lts` في Termux) + Git.
+> البوت يعمل بدون `ffmpeg` / `yt-dlp` / `mpv`، لكن الأوامر التي تعتمد عليها
+> (`ملصق`، `تحميل`، `ايقونة`) ستعطي رسالة خطأ لطيفة بدلًا من العمل.
+>
+> لو أردت إيقاف أصوات الكونسول تمامًا، ضع `off` داخل `sounds/sound.txt`.
 
 > هذه النسخة لا تحتاج إلى `canvas` أو `fs-extra` أو مكتبات بناء الرسوميات، لذلك
 > لا تحتاج إلى تثبيت `python` أو `clang` أو `cairo` لتشغيل البوت.
