@@ -35,18 +35,18 @@ module.exports = {
                 {}
             );
 
-            const tempDir = '/sdcard/.bot/bot/temp';
+            const tempDir = path.join(__dirname, '..', 'temp');
             if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
             const inputPath = path.join(tempDir, 'group_profile.webp');
             const outputPath = path.join(tempDir, 'group_profile.jpg');
             fs.writeFileSync(inputPath, buffer);
 
-            exec(`gm convert ${inputPath} ${outputPath}`, async (err) => {
+            exec(`ffmpeg -y -i "${inputPath}" "${outputPath}"`, async (err) => {
                 if (err) {
                     console.error('❌ خطأ في تحويل الصورة:', err);
                     return sock.sendMessage(chatId, {
-                        text: '❌ فشل في تحويل الصورة، تأكد من تثبيت GraphicsMagick.'
+                        text: '❌ فشل في تحويل الصورة، تأكد من تثبيت ffmpeg (pkg install ffmpeg).'
                     }, { quoted: msg });
                 }
 
