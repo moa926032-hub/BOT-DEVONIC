@@ -52,9 +52,8 @@ pkg update -y && pkg upgrade -y
 pkg install git nodejs-lts -y
 
 # أدوات اختيارية تحتاجها بعض الأوامر فقط
-pkg install ffmpeg -y            # أوامر الملصقات وصورة المجموعة
+pkg install ffmpeg -y            # أوامر الملصقات وصورة المجموعة وتحويل الصوت
 pkg install python -y && pip install -U yt-dlp   # أمر .تحميل
-pkg install ffmpeg -y            # مطلوب أيضًا لتحويل .تحميل صوت
 pkg install mpv -y               # أصوات الكونسول (اختياري تمامًا)
 
 git clone https://github.com/moa926032-hub/BOT-DEVONIC.git
@@ -70,7 +69,8 @@ npm start
 > لو أردت إيقاف أصوات الكونسول تمامًا، ضع `off` داخل `sounds/sound.txt`.
 
 > هذه النسخة لا تحتاج إلى `canvas` أو `fs-extra` أو مكتبات بناء الرسوميات، لذلك
-> لا تحتاج إلى تثبيت `python` أو `clang` أو `cairo` لتشغيل البوت.
+> لا تحتاج `clang` أو `cairo` لتشغيل البوت نفسه (ولا يُطلب `python` إلا
+> لو أردت تثبيت `yt-dlp` لأمر التحميل).
 >
 > يتم تثبيت مكتبة أوامر YouTube وSpotify والأنمي من GitHub تلقائيًا بواسطة
 > `npm install`. لذلك يجب أن يكون Git مثبتًا في Termux، وسيتم تشغيل كل الأوامر.

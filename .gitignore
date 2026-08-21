@@ -1,0 +1,20 @@
+node_modules/
+package-lock.json
+
+# جلسة الواتساب — لا ترفعها أبدًا (تحتوي على مفاتيح حسابك)
+ملف_الاتصال/
+session/
+*.creds.json
+
+# ملفات مؤقتة تنتجها أوامر الميديا
+temp/
+temp-*.jpg
+temp-*.webp
+
+# قاعدة البيانات المحلية
+data/database.json
+data/database.json.tmp
+
+.env
+*.log
+.DS_Store
