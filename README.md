@@ -1,126 +1,129 @@
-<div align="center">
-  
-  <!-- تأثير الإضاءة النيون التكنولوجي (قد لا يظهر في GitHub ولكنه يعمل في المواقع الخارجية ومحررات النصوص) -->
-  <div align="center"> 
-  <a href="https://git.io/typing-svg"> 
-    <img src="https://readme-typing-svg.demolab.com?font=Ribeye&size=50&pause=1000&color=0033cc&center=true&width=910&height=100&lines=DEVONIC-Bot;Devonic+team+Whatsapp+Bot;hello+everyone" alt="Typing SVG" />
-  </a> 
-</div> 
-  
-  <img src="https://i.postimg.cc/PJ78VX2j/Videoshot-20260819-191154.jpg" alt="BANNER IMAGE" width="600"/>
-  
-  <br><br>
-  
-  [![GitHub](https://img.shields.io/badge/GitHub-MO-blue?style=for-the-badge&logo=github)](https://github.com/moa926032-hub)
-  [![WhatsApp](https://img.shields.io/badge/WhatsApp-Support-green?style=for-the-badge&logo=whatsapp)](https://wa.me/201515063273)
-  [![WhatsApp](https://img.shields.io/badge/WhatsApp-Channel-orange?style=for-the-badge&logo=whatsapp)](https://whatsapp.com/channel/0029VbC75tvHltY0oNSC4m3z)
- 
-  **A simple WhatsApp bot from the Devonic team [Mywebsite](https://devonic-courses.vercel.app/)** 
-  
-   [Installation](#-installation) • [Support](#-support) • [Features](#-features) • [Hosting](#-hosting)
-</div>
+# 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+
+بوت واتساب عربي متكامل — تحميل وسائط، بحث، إدارة مجموعات، وأدوات ترفيه.
+
+- القناة الرسمية: <https://whatsapp.com/channel/0029VbC75tvHltY0oNSC4m3z>
+- جروب المطور (إجباري): <https://chat.whatsapp.com/LXJShVjFa0aIDbr2cn1DRd>
+- الفريق: 𝐓𝐄𝐀𝐌 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 — الإصدار 4.0.0
 
 ---
 
-# Features
+## المميزات الأساسية
 
-<div align="center">
-  <img src="https://i.postimg.cc/4xgpDdXN/Videoshot-20260819-191128.jpg" alt="FEATURES IMAGE" width="600"/>
-</div>
-
--  simple bot
--  Ongoing maintenance 
--  Supports buttons
--  Supports downloads 
--  It supports advanced bot features
--  Very easy to modify 
--  Very fast bot
+| الميزة | الوصف |
+|---|---|
+| هوية القناة | كل رسالة يرسلها البوت تظهر وكأنها **معاد توجيهها من قناة 𝐃𝐄𝐕𝐎𝐍𝐈𝐂** تلقائياً |
+| شرط جروب المطور | البوت لا ينفّذ أي أمر إلا إذا كان رقمه عضواً في جروب المطور، ويحاول الانضمام تلقائياً |
+| تفاعل الاستوريهات | يشاهد استوريهات الأصدقاء فوراً (أول مشاهد) ويتفاعل بـ ❤️ تلقائياً |
+| محرك تحميل مزدوج | `yt-dlp` محلياً + سلسلة مزودات خارجية احتياطية، فلا يتوقف التحميل عند حجب السيرفر |
+| قائمة أوامر نصية | أمر `menu` يعمل كنص مرتب بأقسام (رسائل الأزرار/القوائم لم يعد الواتساب يسلّمها للبوتات) |
 
 ---
 
-# Installation
+## التشغيل
 
-<div align="center">
-  <img src="https://i.postimg.cc/909qS3SF/Videoshot-20260819-191111.jpg" alt="INSTALLATION IMAGE" width="600"/>
-</div>
+### المتطلبات
 
-### Termux (Android)
+- Node.js 20 أو أحدث
+- `ffmpeg` (لدمج الصوت مع الفيديو وتحويل الترميز للتوافق مع الواتساب)
+- `yt-dlp` (يُنزّل تلقائياً إلى مجلد `bin/` إن لم يكن مثبتاً)
+
+### على لينكس / VPS
 
 ```bash
-termux-setup-storage
-pkg update -y && pkg upgrade -y
-pkg install git nodejs-lts -y
-
-# أدوات اختيارية تحتاجها بعض الأوامر فقط
-pkg install ffmpeg -y            # أوامر الملصقات وصورة المجموعة وتحويل الصوت
-pkg install python -y && pip install -U yt-dlp   # أمر .تحميل
-pkg install mpv -y               # أصوات الكونسول (اختياري تمامًا)
-
+sudo apt update && sudo apt install -y nodejs npm ffmpeg python3
 git clone https://github.com/moa926032-hub/BOT-DEVONIC.git
-cd BOT-DEVONIC 
+cd BOT-DEVONIC
 npm install
 npm start
 ```
 
-> **متطلبات أساسية:** Node.js 20 أو أحدث (`nodejs-lts` في Termux) + Git.
-> البوت يعمل بدون `ffmpeg` / `yt-dlp` / `mpv`، لكن الأوامر التي تعتمد عليها
-> (`ملصق`، `تحميل`، `ايقونة`) ستعطي رسالة خطأ لطيفة بدلًا من العمل.
->
-> لو أردت إيقاف أصوات الكونسول تمامًا، ضع `off` داخل `sounds/sound.txt`.
+### على تيرمكس (أندرويد)
 
-> هذه النسخة لا تحتاج إلى `canvas` أو `fs-extra` أو مكتبات بناء الرسوميات، لذلك
-> لا تحتاج `clang` أو `cairo` لتشغيل البوت نفسه (ولا يُطلب `python` إلا
-> لو أردت تثبيت `yt-dlp` لأمر التحميل).
->
-> يتم تثبيت مكتبة أوامر YouTube وSpotify والأنمي من GitHub تلقائيًا بواسطة
-> `npm install`. لذلك يجب أن يكون Git مثبتًا في Termux، وسيتم تشغيل كل الأوامر.
+```bash
+pkg update && pkg upgrade -y
+pkg install -y nodejs git ffmpeg python
+git clone https://github.com/moa926032-hub/BOT-DEVONIC.git
+cd BOT-DEVONIC
+npm install
+npm start
+```
 
----
+عند أول تشغيل يطلب منك رقم الواتساب، ثم يعطيك **كود اقتران (Pairing Code)**
+تُدخله من: الواتساب ← الأجهزة المرتبطة ← ربط جهاز ← الربط برقم الهاتف.
 
+### فحص ذاتي قبل التشغيل
 
-# Hosting 
+```bash
+npm run check
+```
 
-<div align="center">
-  <img src="https://i.postimg.cc/T305BJk3/Videoshot-20260819-191141.jpg" alt="HOSTING IMAGE" width="600"/>
-</div>
-
-## WispByte Hosting 
-
-<div align="center">
-  <img src="https://i.postimg.cc/0yDdQQGn/Whats-App-Image-2026-08-18-at-5-27-51-PM.jpg" alt="WispByte IMAGE" width="200"/>
-
-<h4>
-
-**For support, contact the developer [here](https://wa.me/201515063273?text=عندي+مشكله)**  
-**Discount code:** `MO-FORA1ON`
-
-</h4>
-
-[![Website](https://img.shields.io/badge/Website-WispByte-orange?style=for-the-badge&logo=website)](https://wispbyte.com/client)
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-Channel-blue?style=for-the-badge&logo=whatsapp)](https://whatsapp.com/channel/0029VbC75tvHltY0oNSC4m3z)
- 
-
-</div>
+يفحص تحميل كل الإضافات، هوية القناة، تفاعل الاستوري، شرط الجروب، وأوامر التحميل والبحث.
 
 ---
 
-# Support
+## أهم الأوامر
 
-<div align="center">
-  <img src="https://i.postimg.cc/mZ9zTsXz/Videoshot-20260819-190809.jpg" alt="SUPPORT IMAGE" width="600"/>
-</div>
+البريفكس الافتراضي هو `.` ويمكن تغييره بالأمر `.بريفكس`.
 
-- Support: [click](https://wa.me/201515063273)
-- Group: [Join here](https://chat.whatsapp.com/EsUJZScEgZp6zj7atQ4Thz)
-- Channel: [Join here](https://whatsapp.com/channel/0029VbC75tvHltY0oNSC4m3z)
+### الوسائط والتحميل
 
+| الأمر | الوظيفة |
+|---|---|
+| `.تحميل <رابط>` | تحميل من أي منصة مدعومة (يوتيوب، تيك توك، إنستغرام، فيسبوك، تويتر، وغيرها) |
+| `.تحميل صوت <رابط>` | تحميل الصوت فقط |
+| `.اغنيه <اسم>` | بحث بالاسم وتحميل أول نتيجة صوتاً |
+| `.فيديو <اسم>` | بحث بالاسم وتحميل أول نتيجة فيديو |
+| `.يوتيوب <رابط>` | تحميل من يوتيوب |
+| `.تيك <رابط>` | تحميل تيك توك بدون علامة مائية |
+| `.انستا <رابط>` | تحميل إنستغرام |
+| `.فيس <رابط>` | تحميل فيسبوك |
+| `.سبوتيفاي <رابط>` | تحميل أغنية سبوتيفاي |
+| `.ميديافاير <رابط>` | تحميل من ميديا فاير |
+
+### البحث
+
+| الأمر | الوظيفة |
+|---|---|
+| `.بحث <كلمة>` | بحث يوتيوب مع قائمة نتائج |
+| `.بحث_تيك <كلمة>` | بحث تيك توك |
+| `.بين <كلمة>` | بحث صور (بينترست) — يدعم `| العدد` |
+| `.انمي <اسم>` | بحث أنمي |
+| `.اخبار_انمي` | أحدث أخبار الأنمي |
+
+### عام
+
+| الأمر | الوظيفة |
+|---|---|
+| `.menu` أو `.اوامر` | القائمة الكاملة |
+| `.اوامر <القسم>` | أوامر قسم محدد |
+| `.بريفكس <رمز>` | تغيير البريفكس (للنخبة) |
 
 ---
 
-<div align="center">
+## البنية
 
-**Made with by [MO](https://github.com/moa926032-hub)**
+```
+index.js              مشغّل يعيد تشغيل البوت تلقائياً عند التوقف
+main.js               الاتصال بالواتساب + تفعيل الهوية والشرط ومراقبة الاستوري
+config.js             الإعدادات والحقوق والقناة وجروب المطور
+handlers/handler.js   توجيه الرسائل وتمرير args + طبقة توافق للإضافات القديمة
+handlers/plugins.js   تحميل الإضافات وبناء خريطة الأوامر
+utils/branding.js     حقن هوية "معاد توجيهها من القناة" في كل رسالة
+utils/devGroup.js     التحقق من عضوية البوت في جروب المطور
+utils/status.js       مشاهدة الاستوريهات والتفاعل بقلب
+utils/media.js        المحرك الموحد للتحميل والبحث مع سلاسل مزودات بديلة
+utils/remote.js       مزودات تحميل خارجية مختبرة (احتياط عند حجب السيرفر)
+utils/ytdlp.js        غلاف yt-dlp مع تنزيل تلقائي للبرنامج
+utils/send.js         مساعدات إرسال النصوص والوسائط
+plugins/              الأوامر
+scripts/selftest.js   الفحص الذاتي
+```
 
-**© 2026 Devonic team - All Rights Reserved**
+## ملاحظات
 
-</div>
+- إذا ظهرت رسالة يوتيوب `Sign in to confirm you're not a bot` فالبوت ينتقل تلقائياً إلى المزودات الاحتياطية، ولا حاجة لأي إعداد.
+- الحد الأقصى لحجم الملف المرسل هو 90 ميجابايت (قابل للتغيير من `config.js` عبر `media.maxFileSizeMb`).
+- مجلد الجلسة `ملف_الاتصال/` ومجلدات `temp/` و`bin/` مستثناة من المستودع.
+
+> جميع الحقوق محفوظة — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚ | 𝐓𝐄𝐀𝐌 𝐃𝐄𝐕𝐎𝐍𝐈𝐂

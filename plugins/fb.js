@@ -1,80 +1,70 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+/**
+ * فيسبوك — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+ *
+ * النسخة القديمة كانت تقرأ صفحة fdownloader.net، وهي محمية الآن وتغيّر
+ * تصميمها فتوقف الأمر تماماً. الآن يعمل عبر محرك التحميل الداخلي.
+ */
 
-const handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) throw `*❲ ❤️ ❳ ~ ضع رابط الفيديو بعد الأمر ~ ❲ 💙 ❳ *\n\nمثال:\n/${command} https://www.facebook.com/reel/xxxxxx`;
+const media = require('../utils/media');
+const send = require('../utils/send');
+const config = require('../config');
 
-  m.react('🌾');
+module.exports = {
+    command: ['فيس', 'فيسبوك', 'fb', 'fbdl', 'facebook'],
+    description: 'تحميل فيديو من فيسبوك',
+    usage: '.فيس <رابط>',
+    category: 'downloads',
 
-  try {
-    const tokenRes = await userVerify(text);
-    const htmlRes = await ajaxSearch(text, tokenRes.k_token, tokenRes.k_exp, tokenRes.token);
-    const $ = cheerio.load(htmlRes.data);
+    async execute(sock, msg, args = []) {
+        const prefix = config.prefix;
+        const body = send.bodyOf(msg);
+        const url = media.extractUrl(args.join(' ')) || media.extractUrl(body);
 
-    const title = $('.detail h3').text().trim() || 'Facebook Video';
-    const duration = $('.detail p').first().text().trim() || '';
-    const thumb = $('.detail .thumbnail img').attr('src') || '';
-    const downloads = [];
+        if (!url) {
+            return send.reply(sock, msg,
+                `*❲ ❤️ ❳ ضع رابط الفيديو بعد الأمر ❲ 💙 ❳*\n\n` +
+                `مثال:\n${prefix}فيس https://www.facebook.com/reel/xxxxxx`
+            );
+        }
 
-    $('table.table tbody tr').each((_, el) => {
-      const quality = $(el).find('.video-quality').text().trim();
-      const url = $(el).find('a.download-link-fb').attr('href');
-      if (quality && url) downloads.push({ quality, url });
-    });
+        if (!/facebook\.com|fb\.watch|fb\.me/i.test(url)) {
+            return send.reply(sock, msg, '❌ هذا ليس رابط فيسبوك.');
+        }
 
-    if (!downloads.length) throw '❌ لا يوجد فيديو متاح للتحميل';
+        await send.react(sock, msg, '🌾');
 
-    const caption = `> *تم بواسطة ~ ${m.pushName}*`;
+        let result;
+        try {
+            result = await media.download(url, 'video');
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg,
+                `❌ لا يوجد فيديو متاح للتحميل.\n*السبب:* ${error.message}\n\n` +
+                'تأكد أن الفيديو عام وليس مخصصاً للأصدقاء فقط.'
+            );
+        }
 
-    await conn.sendMessage(m.chat, {
-      video: { url: downloads[0].url },
-      caption
-    }, { quoted: m });
+        const info = result.info || {};
+        const caption = [
+            `╭─ 📘 *Facebook*`,
+            info.title && info.title !== 'ملف' ? `│ 📝 ${info.title}` : null,
+            info.uploader ? `│ 👤 ${info.uploader}` : null,
+            info.durationText !== 'غير معروف' ? `│ ⏱️ ${info.durationText}` : null,
+            `│ 💾 ${result.sizeMb.toFixed(2)} MB`,
+            msg.pushName ? `│ ✨ بواسطة ${msg.pushName}` : null,
+            `╰────────────`,
+            '',
+            `> ${config.botName}`
+        ].filter(Boolean).join('\n');
 
-  } catch (e) {
-    console.log(e.message);
-    m.react('❌');
-  }
+        try {
+            await send.sendVideo(sock, msg, result.file, caption);
+            await send.react(sock, msg, '✅');
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            await send.reply(sock, msg, `❌ فشل الإرسال: ${error.message}`);
+        } finally {
+            media.cleanup(result.all);
+        }
+    }
 };
-
-handler.usage = ["فيس"]
-handler.category = "downloads";
-handler.command = ["فيس", "فيسبوك", "fb", "fbdl", "facebook"];
-
-module.exports = handler;
-
-async function userVerify(url) {
-  const data = new URLSearchParams({ url }).toString();
-  const headers = {
-    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-    'Accept': '*/*',
-    'X-Requested-With': 'XMLHttpRequest',
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)',
-    'Referer': 'https://fdownloader.net/id'
-  };
-  const res = await axios.post('https://fdownloader.net/api/userverify', data, { headers });
-  return res.data;
-}
-
-async function ajaxSearch(query, token, exp, cftoken) {
-  const data = new URLSearchParams({
-    k_exp: exp,
-    k_token: token,
-    q: query,
-    lang: 'id',
-    web: 'fdownloader.net',
-    v: 'v2',
-    w: '',
-    cftoken
-  }).toString();
-
-  const headers = {
-    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-    'Accept': '*/*',
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)',
-    'Referer': 'https://fdownloader.net/id'
-  };
-
-  const res = await axios.post('https://v3.fdownloader.net/api/ajaxSearch', data, { headers });
-  return res.data;
-}

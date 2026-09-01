@@ -1,49 +1,81 @@
-async function test(m, { conn, bot, text }) {
-  try {
-    if (!text) return m.reply("*💙 ~ اكتب اسم البحث انجلش عشان يطلع لك الصور ~ ❤️*");
-    
-    const res = await bot.Api.search.pinterestImages({ q: text });
-    const arr = res.data;
-    
-    if (!arr || arr.length === 0) {
-      return m.reply("*⚠️ ~ لا توجد نتائج للبحث ~*");
+/**
+ * بحث الصور / بينترست — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+ *
+ * النسخة القديمة كانت تنادي bot.Api.search.pinterestImages وهو غير موجود
+ * في هذا البوت (undefined) فيسقط الأمر دائماً، إضافة إلى sendCarousel الذي
+ * لم يعد واتساب يوصّله. الآن: مزوّد بينترست الرسمي + مصدر احتياطي، وإرسال
+ * الصور كألبوم عادي.
+ *
+ *   .بين <كلمة>            → 5 صور
+ *   .بين <كلمة> | 8        → عدد مخصص (حتى 10)
+ */
+
+const media = require('../utils/media');
+const send = require('../utils/send');
+const config = require('../config');
+
+module.exports = {
+    command: ['بين', 'بينترست', 'pinterest', 'صور', 'image'],
+    description: 'البحث عن صور وإرسالها',
+    usage: '.بين cars',
+    category: 'search',
+
+    async execute(sock, msg, args = []) {
+        const prefix = config.prefix;
+        const body = send.bodyOf(msg);
+        let raw = (args.join(' ') || '').trim();
+        if (!raw) raw = body.slice(prefix.length).trim().split(/\s+/).slice(1).join(' ').trim();
+
+        if (!raw) {
+            return send.reply(sock, msg,
+                `*💙 اكتب اسم البحث بعد الأمر ❤️*\n\n` +
+                `مثال:\n${prefix}بين cars\n${prefix}بين cars | 8`
+            );
+        }
+
+        // دعم تحديد العدد بعد علامة |
+        const [queryPart, countPart] = raw.split('|');
+        const query = queryPart.trim();
+        const count = Math.min(Math.max(parseInt(countPart, 10) || 5, 1), 10);
+
+        await send.react(sock, msg, '🔎');
+
+        let results;
+        try {
+            results = await media.searchImages(query, count);
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg, `❌ فشل البحث عن الصور.\n*السبب:* ${error.message}`);
+        }
+
+        if (!results.length) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg, '*⚠️ لا توجد نتائج للبحث*');
+        }
+
+        let sent = 0;
+        for (const [index, item] of results.entries()) {
+            const caption = [
+                `📸 *${item.title || query}*`,
+                item.owner ? `👤 ${item.owner}` : null,
+                `🔢 ${index + 1} / ${results.length}`,
+                '',
+                `> ${config.botName}`
+            ].filter(Boolean).join('\n');
+
+            try {
+                await send.sendImage(sock, msg, item.url, caption);
+                sent += 1;
+            } catch {
+                // نتجاهل الصورة التي يفشل تحميلها ونكمل الباقي
+            }
+        }
+
+        if (!sent) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg, '❌ تم إيجاد نتائج لكن تعذر إرسال أي صورة.');
+        }
+
+        await send.react(sock, msg, '✅');
     }
-    
-    const start = Math.floor(Math.random() * (arr.length - 10));
-    const selectedImages = arr.slice(start, start + 10);
-
-    const cards = selectedImages.map((item, index) => {
-      const title = item.title && item.title !== 'No title' ? item.title : `Image ~ ${index + 1}`;
-      
-      return {
-        imageUrl: item.url,
-        bodyText: `*${title}*`,
-        footerText: item.owner ? `👤 ${item.owner} • Pinterest` : '📌 Pinterest Image',
-        buttons: [
-          { name: 'cta_url', params: { display_text: '🔗╎ رؤيـتـهـا', url: item.pinUrl || item.url } },
-          { name: 'cta_copy', params: { display_text: '📋╎ نـسـخ الـرابــط', copy_code: item.url } }
-        ]
-      };
-    });
-
-    return await conn.sendCarousel(m.chat, {
-      headerText: `📸 البحث الخاص بك → *[ ${text} ]* `,
-      globalFooterText: 'Swipe to see more images →',
-      cards: cards,
-      mentions: [m.sender],
-      newsletter: {
-      name: '𝐓𝐄𝐀𝐌 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 || 𝑩𝑶𝑻',
-      jid: '0029VbC75tvHltY0oNSC4m3z@newsletter'
-    },
-    }, reply_status);
-    
-  } catch (error) {
-    console.error(error.messsage);
-    m.react("❌")
-  }
-}
-
-test.category = "search";
-test.usage = ["بينترست"];
-test.command = ["بين", "بينترست", "pinterest"];
-module.exports = test;
+};

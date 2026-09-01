@@ -1,98 +1,120 @@
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+/**
+ * أمر التحميل الشامل — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+ *
+ * أعطال النسخة القديمة التي تم إصلاحها:
+ *  • كان يقرأ نص الأمر من extendedTextMessage فقط، والرسائل العادية
+ *    تأتي في conversation → فكان يخرج دائماً برسالة "الاستخدام".
+ *  • لم يكن المعالج يمرّر args للأوامر أصلاً.
+ *  • كان يعتمد على yt-dlp بشكل مباشر بدون التحقق من وجوده أو تثبيته.
+ *  • لم يكن هناك حد لحجم الملف فتفشل الإرسال بصمت.
+ *
+ * الاستخدام:
+ *   .تحميل <رابط>            → فيديو
+ *   .تحميل صوت <رابط>        → صوت mp3
+ *   .تحميل فيديو <رابط>      → فيديو
+ */
+
+const media = require('../utils/media');
+const send = require('../utils/send');
+const config = require('../config');
+
+const AUDIO_WORDS = ['صوت', 'اغنيه', 'أغنية', 'اغنية', 'mp3', 'audio', 'sound'];
+const VIDEO_WORDS = ['فيديو', 'فديو', 'mp4', 'video'];
 
 module.exports = {
-    command: 'تحميل',
-    description: 'تحميل فيديو أو صوت من يوتيوب، تيك توك، أو إنستغرام.',
-    usage: '.تحميل فيديو [الرابط] أو .تحميل صوت [الرابط]',
+    command: ['تحميل', 'دن', 'download', 'dl'],
+    description: 'تحميل فيديو أو صوت من يوتيوب، تيك توك، إنستغرام، فيسبوك، تويتر وغيرها',
+    usage: '.تحميل صوت <رابط>',
+    category: 'downloads',
 
-    async execute(sock, msg, args) {
+    async execute(sock, msg, args = []) {
+        const chatId = msg.key.remoteJid;
+        const body = send.bodyOf(msg);
+        const prefix = config.prefix;
+
+        // نبني قائمة الكلمات من args، وإن كانت فارغة نستخرجها من نص الرسالة
+        let words = Array.isArray(args) && args.length
+            ? [...args]
+            : body.slice(prefix.length).trim().split(/\s+/).slice(1);
+
+        const url = media.extractUrl(words.join(' ')) || media.extractUrl(body) ||
+            media.extractUrl(msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation || '');
+
+        if (!url) {
+            return send.reply(sock, msg,
+                `╭─ 📥 *التحميل*\n` +
+                `│ ${prefix}تحميل <رابط>            ← فيديو\n` +
+                `│ ${prefix}تحميل صوت <رابط>       ← صوت\n` +
+                `│ ${prefix}تحميل فيديو <رابط>     ← فيديو\n` +
+                `╰────────────\n\n` +
+                `المنصات المدعومة:\n${media.PLATFORMS.map(item => `• ${item.name}`).join('\n')}\n\n` +
+                `> ${config.botName}`
+            );
+        }
+
+        const hint = words.filter(word => word !== url).join(' ').toLowerCase();
+        const mode = AUDIO_WORDS.some(word => hint.includes(word)) ? 'audio'
+            : VIDEO_WORDS.some(word => hint.includes(word)) ? 'video'
+            : 'video';
+
+        const platform = media.detectPlatform(url);
+        await send.react(sock, msg, '⏳');
+
+        let notice;
         try {
-            const chatId = msg.key.remoteJid;
-
-            let commandText = msg.message?.extendedTextMessage?.text || '';
-            if (commandText && commandText.startsWith('.تحميل')) {
-                const commandParts = commandText.split(' ');
-                if (commandParts.length < 3) {
-                    return await sock.sendMessage(chatId, { text: '❌ الاستخدام: .تحميل [فيديو|صوت] [الرابط]' }, { quoted: msg });
-                }
-                args = [commandParts[1].toLowerCase(), commandParts.slice(2).join(' ').trim()];
-            }
-
-            if (!args || args.length < 2) {
-                return await sock.sendMessage(chatId, { text: '❌ الاستخدام: .تحميل [فيديو|صوت] [الرابط]' }, { quoted: msg });
-            }
-
-            const [format, url] = [args[0].toLowerCase(), args[1].trim()];
-            if (!url.startsWith('http')) {
-                return await sock.sendMessage(chatId, { text: '❌ الرابط غير صالح.' }, { quoted: msg });
-            }
-
-            const timestamp = crypto.randomUUID();
-            const tempDir = path.join(__dirname, '..', 'temp');
-            if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
-
-            const videoPath = path.join(tempDir, `${timestamp}.mp4`);
-            const audioPath = path.join(tempDir, `${timestamp}.mp3`);
-
-            await sock.sendMessage(chatId, { text: '⏳ جاري التحميل...' }, { quoted: msg });
-
-            const cleanupFile = (filePath) => {
-                if (fs.existsSync(filePath)) {
-                    fs.unlink(filePath, (err) => {
-                        if (err) console.error(`❌ فشل في حذف الملف ${filePath}:`, err.message);
-                    });
-                }
-            };
-
-            if (format === 'فيديو') {
-                exec(`yt-dlp -f best -o "${videoPath}" "${url}"`, async (errDownload) => {
-                    if (errDownload || !fs.existsSync(videoPath)) {
-                        console.error('[ERROR] تحميل الفيديو:', errDownload?.message);
-                        cleanupFile(videoPath);
-                        return await sock.sendMessage(chatId, { text: `❌ فشل تحميل الفيديو.` }, { quoted: msg });
-                    }
-
-                    try {
-                        await sock.sendMessage(chatId, {
-                            video: { url: videoPath },
-                            caption: `🎥 *تم تحميل الفيديو*\n🔗 ${url}`,
-                        }, { quoted: msg });
-                    } catch (sendError) {
-                        console.error('❌ خطأ أثناء إرسال الفيديو:', sendError);
-                    } finally {
-                        cleanupFile(videoPath);
-                    }
-                });
-            } else if (format === 'صوت') {
-                exec(`yt-dlp -x --audio-format mp3 -o "${audioPath}" "${url}"`, async (errDownload) => {
-                    if (errDownload || !fs.existsSync(audioPath)) {
-                        console.error('[ERROR] تحميل الصوت:', errDownload?.message);
-                        cleanupFile(audioPath);
-                        return await sock.sendMessage(chatId, { text: `❌ فشل تحميل الصوت.` }, { quoted: msg });
-                    }
-
-                    try {
-                        await sock.sendMessage(chatId, {
-                            audio: { url: audioPath },
-                            mimetype: 'audio/mpeg',
-                        }, { quoted: msg });
-                    } catch (sendError) {
-                        console.error('❌ خطأ أثناء إرسال الصوت:', sendError);
-                    } finally {
-                        cleanupFile(audioPath);
-                    }
-                });
-            } else {
-                return await sock.sendMessage(chatId, { text: '❌ يجب تحديد نوع التحميل (فيديو أو صوت).' }, { quoted: msg });
-            }
-        } catch (error) {
-            console.error('❌ حدث خطأ أثناء تنفيذ أمر تحميل:', error);
-            await sock.sendMessage(msg.key.remoteJid, {
-                text: `❌ حدث خطأ أثناء تنفيذ أمر التحميل:\n\n${error.message || error.toString()}`
+            notice = await sock.sendMessage(chatId, {
+                text: `⏳ جاري تحميل ${mode === 'audio' ? 'الصوت' : 'الفيديو'}` +
+                    `${platform ? ` من *${platform.name}*` : ''}...`
             }, { quoted: msg });
+        } catch { /* غير مهم */ }
+
+        let result;
+        try {
+            result = await media.download(url, mode);
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg,
+                `❌ فشل التحميل.\n\n*السبب:* ${error.message}\n\n` +
+                `تأكد أن الرابط عام وليس خاصاً، وأن الملف أقل من ${config.media.maxFileSizeMb}MB.`
+            );
+        }
+
+        const info = result.info || {};
+        const caption = [
+            `╭─ 📥 *تم التحميل*`,
+            `│ 🎬 ${info.title || 'ملف'}`,
+            info.uploader ? `│ 👤 ${info.uploader}` : null,
+            info.durationText && info.durationText !== 'غير معروف' ? `│ ⏱️ ${info.durationText}` : null,
+            `│ 💾 ${result.sizeMb.toFixed(2)} MB`,
+            platform ? `│ 🌐 ${platform.name}` : null,
+            `╰────────────`,
+            '',
+            `> ${config.botName}`
+        ].filter(Boolean).join('\n');
+
+        try {
+            if (mode === 'audio') {
+                await send.sendAudio(sock, msg, result.file, {
+                    fileName: `${(info.title || 'audio').slice(0, 60)}.mp3`,
+                    contextInfo: send.adReply({
+                        title: info.title,
+                        body: info.uploader,
+                        thumbnailUrl: info.thumbnail
+                    })
+                });
+                await send.reply(sock, msg, caption);
+            } else {
+                await send.sendVideo(sock, msg, result.file, caption);
+            }
+            await send.react(sock, msg, '✅');
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            await send.reply(sock, msg, `❌ تم التحميل لكن فشل الإرسال: ${error.message}`);
+        } finally {
+            media.cleanup(result.all);
+            if (notice?.key) {
+                await sock.sendMessage(chatId, { delete: notice.key }).catch(() => {});
+            }
         }
     }
 };

@@ -7,6 +7,10 @@ const chalk = require('chalk');
 const readline = require('readline');
 const { exec } = require('child_process');
 const logger = require('./utils/console');
+const config = require('./config');
+const { applyBranding } = require('./utils/branding');
+const devGroup = require('./utils/devGroup');
+const statusWatcher = require('./utils/status');
 
 const databasePath = path.join(__dirname, 'data', 'database.json');
 function loadDatabase() {
@@ -70,9 +74,12 @@ async function startBot() {
     try {
         console.clear();
         console.log(asciiArt);
-        console.log(chalk.hex('#FFD700').bold('\nWELCOME TO DEVONIC!\n'));
+        console.log(chalk.hex('#FFD700').bold(`\nWELCOME TO ${config.botName}\n`));
+        console.log(chalk.hex('#FFD700')(`  القناة  : ${config.channel.link}`));
+        console.log(chalk.hex('#FFD700')(`  الجروب  : ${config.devGroup.invite}`));
+        console.log(chalk.hex('#FFD700')(`  الإصدار : ${config.version}\n`));
 
-        playSound('ANASTASIA.mp3');
+        playSound('DEVONIC.mp3');
 
         // index.js passes the session directory explicitly. Keeping this
         // configurable prevents accidental creation of a second session.
@@ -88,8 +95,12 @@ async function startBot() {
             browser: ['MacOs', 'Chrome', '1.0.0'],
             logger: pino({ level: 'silent' }),
             markOnlineOnConnect: true,
-            generateHighQualityLinkPreview: true
+            generateHighQualityLinkPreview: true,
+            syncFullHistory: false
         });
+
+        // كل رسالة يرسلها البوت تظهر كمعاد توجيهها من قناة البوت الرسمية
+        applyBranding(sock);
 
         sock.ev.on('groups.upsert', async (groups) => {
             for (const group of groups) {
@@ -142,21 +153,31 @@ async function startBot() {
                     const botNumber = sock.user.id.split(':')[0].replace(/[^0-9]/g, '');
                     const jid = `${botNumber}@s.whatsapp.net`;
 
-                    const [info] = await sock.onWhatsApp(jid);
-                    if (!info?.jid || !info?.lid) {
-                        logger.error('تعذر الحصول على معلومات الجلسة من onWhatsApp');
-                        return;
-                    }
-
-                    const lidNumber = info.lid.replace(/[^0-9]/g, '');
-
                     await addEliteNumber(botNumber);   // رقم الجلسة
-                    await addEliteNumber(lidNumber);   // فقط أرقام الـ LID
 
-                    logger.info(`ADDED ${botNumber} AND ${lidNumber} TO ELITE!`);
+                    // ملاحظة: كان هنا return يوقف باقي التهيئة إن فشل onWhatsApp
+                    const [info] = await sock.onWhatsApp(jid).catch(() => []);
+                    if (info?.lid) {
+                        const lidNumber = info.lid.replace(/[^0-9]/g, '');
+                        await addEliteNumber(lidNumber);
+                        logger.info(`ADDED ${botNumber} AND ${lidNumber} TO ELITE!`);
+                    } else {
+                        logger.warn('تعذر الحصول على الـ LID — تم المتابعة بالرقم الأساسي فقط');
+                    }
                 } catch (e) {
                     logger.error('فشل في إضافة رقم الجلسة إلى النخبة:', e.message);
                 }
+
+                /* شرط جروب المطور: البوت لا يعمل إلا إذا كان رقمه عضواً فيه */
+                try {
+                    await devGroup.verify(sock);
+                    devGroup.watch(sock);
+                } catch (error) {
+                    logger.error(`فشل التحقق من جروب المطور: ${error.message}`);
+                }
+
+                /* مشاهدة الاستوريهات والتفاعل بقلب (كخط دفاع ثانٍ مع المعالج) */
+                statusWatcher.attach(sock);
 
                 require('./handlers/handler').handleMessagesLoader();
                 listenToConsole(sock);

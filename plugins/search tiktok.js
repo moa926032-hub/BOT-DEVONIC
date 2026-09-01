@@ -1,42 +1,77 @@
-async function test(m, { conn, bot, text }) {
-  if (!text) return m.reply("#🫯: اكتب نص جنب الأمر")
-  try {
-  const res = await fetch(`https://www.emam-api.web.id/home/sections/Search/api/tiktok/videos?q=${text}`)
-const { data } = await res.json()
+/**
+ * بحث تيك توك — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+ *
+ * النسخة القديمة كانت تستخدم أزراراً تفاعلية لم يعد واتساب يوصّلها، و API
+ * يرجع 403. الآن: مزوّدات متعددة + إرسال الفيديو مباشرة.
+ *
+ *   .بحث_تيك <كلمة>
+ */
 
-if (data && data.length > 0) {
-    const { title, no_watermark: video, music } = data[0]
+const media = require('../utils/media');
+const send = require('../utils/send');
+const config = require('../config');
 
-    await conn.sendButtonNormal(m.chat, {
-        media: { url: video },
-        mediaType: 'video',
-        caption: `${title || "no title"}`,
-        buttons: [
-            { 
-                name: "cta_copy", 
-                params: { 
-                    display_text: "💟╎ My Channel", 
-                    copy_code: "https://whatsapp.com/channel/0029VbC75tvHltY0oNSC4m3z" 
-                } 
-            },
-        ],
-        mentions: [m.sender],
-        newsletter: {
-            name: '𝐓𝐄𝐀𝐌 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 || 𝑩𝑶𝑻',
-            jid: '0029VbC75tvHltY0oNSC4m3z@newsletter'
-        },
-    }, global.reply_status)
-} else {
-    await conn.sendMessage(m.chat, { text: `لا يوجد "${text}"` })
-}
-    
-  } catch (error) {
-    console.error(error.messsage);
-    m.react("❌")
-  }
-}
+module.exports = {
+    command: ['بحث_تيك', 'بحث_تيكتوك', 'ttsearch'],
+    description: 'البحث في تيك توك وإرسال أفضل نتيجة',
+    usage: '.بحث_تيك قطط',
+    category: 'search',
 
-test.category = "search";
-test.usage = ["بحث_تيك"];
-test.command = ["بحث_تيك"];
-module.exports = test;
+    async execute(sock, msg, args = []) {
+        const prefix = config.prefix;
+        const body = send.bodyOf(msg);
+        let query = (args.join(' ') || '').trim();
+        if (!query) query = body.slice(prefix.length).trim().split(/\s+/).slice(1).join(' ').trim();
+
+        if (!query) {
+            return send.reply(sock, msg, `*🫯 اكتب كلمة البحث بعد الأمر*\n\nمثال:\n${prefix}بحث_تيك قطط`);
+        }
+
+        await send.react(sock, msg, '🔎');
+
+        let results;
+        try {
+            results = await media.searchTikTok(query, 5);
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg,
+                `❌ فشل البحث في تيك توك.\n*السبب:* ${error.message}\n\n` +
+                `يمكنك بدلاً من ذلك إرسال رابط الفيديو مع *${prefix}تيك*`
+            );
+        }
+
+        if (!results.length) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg, `⚠️ لا توجد نتائج لـ "${query}"`);
+        }
+
+        const best = results[0];
+        const caption = [
+            `╭─ 🎵 *بحث تيك توك:* ${query}`,
+            `│ 📝 ${best.title || 'بدون عنوان'}`,
+            best.author ? `│ 👤 ${best.author}` : null,
+            best.views ? `│ 👁️ ${media.humanViews(best.views)}` : null,
+            best.likes ? `│ ❤️ ${media.humanViews(best.likes)}` : null,
+            `╰────────────`,
+            '',
+            `📣 قناتنا: ${config.channel?.link || ''}`,
+            '',
+            `> ${config.botName}`
+        ].filter(Boolean).join('\n');
+
+        try {
+            await send.sendVideo(sock, msg, best.video, caption);
+            await send.react(sock, msg, '✅');
+
+            if (results.length > 1) {
+                const rest = results.slice(1).map((item, index) =>
+                    `${index + 2}. ${item.title || 'بدون عنوان'}${item.author ? ` — ${item.author}` : ''}`
+                ).join('\n');
+                await send.reply(sock, msg, `*نتائج أخرى:*\n${rest}\n\n> ${config.botName}`);
+            }
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            await send.reply(sock, msg, `❌ فشل إرسال الفيديو: ${error.message}`);
+        }
+    }
+};

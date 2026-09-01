@@ -1,63 +1,71 @@
-const crypto = require('crypto');
-const cheerio = require('cheerio');
-const axios = require('axios');
+/**
+ * تيك توك — تحميل بدون علامة مائية — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+ *
+ * النسخة القديمة كانت تعتمد على قراءة صفحة ssstik.io بـ cheerio، وقد تغيّر
+ * تصميم الصفحة فتوقف الأمر. الآن: مزوّد سريع + محرك yt-dlp كخطة بديلة.
+ */
 
-const ff = async (m, { text, conn }) => {
-  if (!text) return m.reply("❌: حط رابط الفيديو جنب الأمر");
-  
-  try {
-    
-    const videoData = await downloadTikTok(text);
+const media = require('../utils/media');
+const send = require('../utils/send');
+const config = require('../config');
 
-    if (!videoData.videoUrl && !videoData.audioUrl) {
-      return m.reply("❌ Failed to download video");
-    }
+module.exports = {
+    command: ['تيك', 'تيكتوك', 'tiktok', 'tt'],
+    description: 'تحميل فيديو تيك توك بدون علامة مائية',
+    usage: '.تيك <رابط>',
+    category: 'downloads',
 
-    if (videoData.videoUrl) {
-      await conn.sendMessage(m.chat, { video: { url: videoData.videoUrl }, caption: `🟢 ${videoData.description || "no description"}` });
+    async execute(sock, msg, args = []) {
+        const prefix = config.prefix;
+        const body = send.bodyOf(msg);
+        const url = media.extractUrl(args.join(' ')) || media.extractUrl(body);
+
+        if (!url) {
+            return send.reply(sock, msg,
+                `❌ ضع رابط فيديو تيك توك بعد الأمر.\n\n` +
+                `مثال:\n${prefix}تيك https://vt.tiktok.com/xxxxxx\n\n` +
+                `للبحث بالاسم: ${prefix}بحث_تيك <كلمة>`
+            );
+        }
+
+        if (!/tiktok\.com|douyin\.com/i.test(url)) {
+            return send.reply(sock, msg, '❌ هذا ليس رابط تيك توك. استخدم *.تحميل* للمنصات الأخرى.');
+        }
+
+        await send.react(sock, msg, '⏳');
+
+        let data;
+        try {
+            data = await media.tiktokDownload(url);
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            return send.reply(sock, msg, `❌ فشل تحميل الفيديو.\n*السبب:* ${error.message}`);
+        }
+
+        const caption = [
+            `╭─ 🎵 *TikTok*`,
+            data.title ? `│ 📝 ${data.title}` : null,
+            data.author ? `│ 👤 ${data.author}` : null,
+            `╰────────────`,
+            '',
+            `> ${config.botName}`
+        ].filter(Boolean).join('\n');
+
+        try {
+            await send.sendVideo(sock, msg, data.type === 'url' ? data.video : data.file, caption);
+
+            if (data.music) {
+                await send.sendAudio(sock, msg, data.music, {
+                    fileName: `${(data.title || 'tiktok-audio').slice(0, 50)}.mp3`
+                }).catch(() => {});
+            }
+
+            await send.react(sock, msg, '✅');
+        } catch (error) {
+            await send.react(sock, msg, '❌');
+            await send.reply(sock, msg, `❌ فشل إرسال الفيديو: ${error.message}`);
+        } finally {
+            if (data.all) media.cleanup(data.all);
+        }
     }
-    
-    if (videoData.audioUrl) {
-      await conn.sendMessage(m.chat, { audio: { url: videoData.audioUrl }, mimetype: 'audio/mpeg' });
-    }
-    
-  } catch (error) {
-    console.error(error.message);
-    m.reply(error.message);
-  }
 };
-ff.usage = ["تيك"]
-ff.category = "downloads";
-ff.command = ["تيك", "tiktok", "tt"];
-module.exports = ff;
-
-
-async function downloadTikTok(url) {
-
-  let data = new URLSearchParams({
-    'id': url,
-    'locale': 'en',
-    'tt': crypto.randomBytes(8).toString('hex'),
-  }).toString();
-
-  let config = {
-    method: 'POST',
-    url: 'https://ssstik.io/abc?url=dl',
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    data: data
-  };
-
-  const response = await axios.request(config);
-  const $ = cheerio.load(response.data);
-
-  return {
-    author: $('h2').first().text().trim(),
-    description: $('.maintext').text().trim(),
-    videoUrl: $('a[href*="tikcdn.io"]:not(#hd_download)').first().attr('href'),
-    audioUrl: $('.download_link.music').attr('href'),
-    hdVideo: $('#hd_download').attr('href')
-  };
-}

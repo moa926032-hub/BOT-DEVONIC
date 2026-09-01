@@ -1,87 +1,59 @@
-const fs = require('fs');
-const path = require('path');
+/**
+ * تغيير البريفكس — 𝐃𝐄𝐕𝐎𝐍𝐈𝐂 𝐁𝐎𝐓 ⚚
+ *
+ * كان هذا الأمر يعيد كتابة ملف config.js بالكامل، فيمسح كل الإعدادات
+ * (اسم البوت، القناة، جروب المطور، إعدادات الاستوري...) عند تغيير البريفكس.
+ * الآن البريفكس يُحفظ في data/prefix.txt عبر config.prefix فقط.
+ */
+
 const config = require('../config.js');
-const { isElite } = require('../haykala/elite.js'); 
-
-const configPath = path.join(__dirname, '../config.js');
+const { isElite } = require('../haykala/elite.js');
 
 module.exports = {
-  command: 'بريفكس',
-  description: 'تغيير البريفكس الخاص بالأوامر (النخبة فقط)',
-  usage: '.بريفكس [رمز جديد]',
-  category: 'tools',
+    command: ['بريفكس', 'prefix'],
+    description: 'تغيير البريفكس الخاص بالأوامر (النخبة فقط)',
+    usage: '.بريفكس $',
+    category: 'tools',
 
-  async execute(sock, msg) {
-    const chatId = msg.key.remoteJid;
-    const senderJid = msg.key.participant || msg.key.remoteJid;
-    const sender = senderJid.split('@')[0];
+    async execute(sock, msg, args = []) {
+        const chatId = msg.key.remoteJid;
+        const senderJid = msg.key.participant || msg.key.remoteJid;
+        const sender = senderJid.split('@')[0];
 
-    if (typeof isElite !== 'function' || !isElite(sender)) {
-      return sock.sendMessage(chatId, {
-        text: config.messages.ownerOnly
-      }, { quoted: msg });
-    }
-
-    const fullText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
-    const currentPrefix = config.prefix || config.defaultPrefix || '.';
-    const input = fullText.startsWith(currentPrefix)
-      ? fullText.slice((currentPrefix + 'بريفكس').length).trim()
-      : '';
-
-    if (!input) {
-      return sock.sendMessage(chatId, {
-        text: '❌ الرجاء كتابة البريفكس الجديد.\nمثال: .بريفكس $ أو .بريفكس فارغ'
-      }, { quoted: msg });
-    }
-
-    const newPrefix = (input === 'فارغ') ? '' : input;
-    config.prefix = newPrefix;
-
-    const updatedContent = `let prefix = '${newPrefix}';
-
-module.exports = {
-    botName: 'Anastasia',
-    version: '2.5.0',
-    owner: '972532731932',
-
-    defaultPrefix: '.',
-    get prefix() {
-        return prefix;
-    },
-    set prefix(newPrefix) {
-        if (newPrefix && typeof newPrefix === 'string') {
-            prefix = newPrefix;
+        if (typeof isElite !== 'function' || !isElite(sender)) {
+            return sock.sendMessage(chatId, { text: config.messages.ownerOnly }, { quoted: msg });
         }
-    },
 
-    allowedGroups: [],
+        const fullText = msg.message?.conversation ||
+            msg.message?.extendedTextMessage?.text || '';
+        const currentPrefix = config.prefix || config.defaultPrefix || '.';
 
-    messages: {
-        error: '❌ حدث خطأ أثناء تنفيذ الأمر',
-        noPermission: 'ليس لديك صلاحية لاستخدام هذا الأمر',
-        groupOnly: 'هذا الأمر متاح فقط في المجموعات',
-        ownerOnly: 'هذا الأمر متاح فقط للنخبة',
-        notAllowedGroup: 'عذراً، البوت لا يعمل في هذه المجموعة'
-    },
+        let input = (Array.isArray(args) ? args.join(' ') : '').trim();
+        if (!input && fullText.startsWith(currentPrefix)) {
+            input = fullText.slice(currentPrefix.length).trim().split(/\s+/).slice(1).join(' ').trim();
+        }
 
-    colors: {
-        success: '\\x1b[32m',
-        error: '\\x1b[31m',
-        info: '\\x1b[36m',
-        warn: '\\x1b[33m',
-        reset: '\\x1b[0m'
+        if (!input) {
+            return sock.sendMessage(chatId, {
+                text: `❌ الرجاء كتابة البريفكس الجديد.\n\n` +
+                    `مثال:\n${currentPrefix}بريفكس $\n${currentPrefix}بريفكس فارغ\n\n` +
+                    `البريفكس الحالي: ${currentPrefix === '' ? 'فارغ' : currentPrefix}`
+            }, { quoted: msg });
+        }
+
+        const newPrefix = (input === 'فارغ' || input === 'empty') ? '' : input;
+
+        if (newPrefix.length > 3) {
+            return sock.sendMessage(chatId, {
+                text: '❌ البريفكس طويل جداً، استخدم 3 رموز كحد أقصى.'
+            }, { quoted: msg });
+        }
+
+        config.prefix = newPrefix;
+
+        const display = newPrefix === '' ? 'فارغ' : `( ${newPrefix} )`;
+        return sock.sendMessage(chatId, {
+            text: `✅ تم تغيير البريفكس إلى ${display}\n\n> ${config.botName}`
+        }, { quoted: msg });
     }
-};
-`;
-
-    fs.writeFileSync(configPath, updatedContent);
-
-    const display = newPrefix === '' ? 'فارغ' : `(${newPrefix})`;
-    let response = `✅ تم تغيير البريفكس إلى ${display}`;
-    if (newPrefix === '') {
-      response += `\n⚠️ يجب إعادة تشغيل البوت لتفعيل البريفكس الفارغ.`;
-    }
-
-    return sock.sendMessage(chatId, { text: response }, { quoted: msg });
-  }
 };

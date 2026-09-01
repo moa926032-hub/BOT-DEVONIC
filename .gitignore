@@ -11,9 +11,13 @@ temp/
 temp-*.jpg
 temp-*.webp
 
+# ملف yt-dlp المنزّل تلقائياً
+bin/
+
 # قاعدة البيانات المحلية
 data/database.json
 data/database.json.tmp
+data/prefix.txt
 
 .env
 *.log
